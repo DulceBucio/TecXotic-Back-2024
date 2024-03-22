@@ -63,12 +63,16 @@ def main():
                     handle_button_up(event)
                 elif event.type == JOYHATMOTION:  #hacemos el callback de las funciones
                     handle_hat_motion(joystick)
+            
 
     except KeyboardInterrupt:
         #paramos el programa presionando Ctrl+C
         print("\nSaliendo del programa.")
         pygame.quit()
 
+
+
 #se valida que se está ejecutando nuestra función main
 if __name__ == "__main__":
     main()
+

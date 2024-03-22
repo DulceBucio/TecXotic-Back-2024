@@ -18,5 +18,8 @@ def handle_axis_motion(event, joystick):
     data = {'axis_name': axis_name, 'value': value}
 
     # Send a POST request to the Flask API
-    response = requests.post('http://192.168.5.1/postControlMovement', json=data)
-    print(response.text)
+    try:
+        response = requests.post('http://192.168.5.1:5000/postControlMovement', json=data)
+        print("Data sent to API. Status code:", response.status_code)
+    except Exception as e:
+        print("Failed to send data to API:", e)
