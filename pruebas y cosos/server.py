@@ -1,22 +1,14 @@
-import websockets
-import asyncio
-from flask import Response, request, abort
-from flask_cors import CORS
-
-def run():
-    start_server = websockets.serve(echo, '0.0.0.0', 55000)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+from flask import Flask, request
 
 app = Flask(__name__)
-CORS(app)
 
+@app.route('/post', methods=['POST'])
+def handle_post():
+    data = request.get_json()  # Recibir datos JSON del cuerpo del mensaje POST
+    # Hacer algo con los datos recibidos
+    print("Datos recibidos:", data)
+    return "Datos recibidos correctamente", 200
 
-app.route('/postControlMovement', methods=['POST'])
-def postControlMovement():
-    if request.method == 'POST':
-        data = request.get_json()
-        print(data)
-        return Response(status=200)
-    else:
-        abort(400)
+if __name__ == '__main__':
+    # Ejecutar la aplicación Flask en la dirección IP de la red local y en el puerto 5000
+    app.run(host='0.0.0.0', port=5000)
