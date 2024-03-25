@@ -11,4 +11,5 @@ def handle_post():
 
 if __name__ == '__main__':
     # Ejecutar la aplicación Flask en la dirección IP de la red local y en el puerto 5000
-    app.run(host='0.0.0.0', port=5000)
+    Thread(
+            target=lambda: app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False, threaded=True)).start()
