@@ -5,41 +5,54 @@ import requests  # Import the requests library
 
 # Function to handle joystick axis motion
 def handle_axis_motion(event, joystick):
+    #print("Axis motion:", event.axis, "Value:", event.value)
     axis_names = {
-        0: "boton movimiento",
-        1: "boton movimiento",
+        0: "JoyStick izquierdo",
+        1: "JoyStick izquierdo",
         2: "JoyStick derecho",
-        3: "JoyStick derecho",
-        4: "Gatillo izquierdo",
-        5: "Gatillo derecho"
+        3: "JoyStick derecho", 
     }
     axis_name = axis_names.get(event.axis, "")
-    value = joystick.get_axis(event.axis)
-    print("Eje {} manipulado. Valor: {}".format(axis_name, value))
+    if axis_name == "JoyStick izquierdo":
+        value_x = joystick.get_axis(0)
+        value_y = joystick.get_axis(1)
+    elif axis_name == "JoyStick derecho":
+        value_x = joystick.get_axis(2)
+        value_y = joystick.get_axis(3)
+        
+    data = {'button_name': axis_name, 'value_x': value_x, 'value_y': value_y}
+    post(data)
 
-    # Construct the data to be sent
-    data = {'axis_name': axis_name, 'value': value}
 
-    # Send a POST request to the Flask API
+def post(data):
+    print(data)
+    '''
     try:
-        response = requests.post('http://192.168.5.1:5000/postControlMovement', json=data)
+        response = requests.post('http://192.168.5.1:8080/postControlMovement', json=data)
         print("Data sent to API. Status code:", response.status_code)
     except Exception as e:
         print("Failed to send data to API:", e)
+        '''
+
 
 # The remaining functions and main loop remain unchanged
 def handle_button_down(event):
     button_names = ["A", "B", "X", "Y", "LB", "RB"]
     button_name = button_names[event.button] if event.button < len(button_names) else str(event.button)
-    print("Boton {} presionado.".format(button_name))
+    data = {'button_name': button_name, 'value': event.button}
+    post(data)
 
 def handle_button_up(event):
     button_names = ["A", "B", "X", "Y", "LB", "RB"]
     button_name = button_names[event.button] if event.button < len(button_names) else str(event.button)
-    print("Boton {} liberado. Valor: {}".format(button_name, event.button))
+    data = {'button_name': button_name, 'value': event.button}
+    post(data)
 
 def handle_hat_motion(joystick):
-    print("JoyStick izquierdo manipulado. Valor: {}".format(joystick.get_hat(0)))
+    #print("JoyStick izquierdo manipulado. Valor: {}".format(joystick.get_hat(0)))
+    data = {'button_name': "modo", 'value_x': joystick.get_hat(0)[0], 'value_y': joystick.get_hat(0)[1]}
+
+    post(data)
 
 def main():
     pygame.init()
