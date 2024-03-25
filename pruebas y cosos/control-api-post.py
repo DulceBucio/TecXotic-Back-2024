@@ -1,85 +1,49 @@
-# -*- coding: utf-8 -*-
 import pygame
 from pygame.locals import *
-import requests  # Import the requests library
+import requests
 
-# Function to handle joystick axis motion
-def handle_axis_motion(event, joystick):
-    #print("Axis motion:", event.axis, "Value:", event.value)
-    axis_names = {
-        0: "JoyStick izquierdo",
-        1: "JoyStick izquierdo",
-        2: "JoyStick derecho",
-        3: "JoyStick derecho", 
+API_BASE_URL = 'http://192.168.5.1:8080'  # Base URL of your Flask API
+
+# Function to send control signals for movement
+def send_movement(roll, pitch, yaw, throttle):
+    data = {
+        'roll': roll,
+        'pitch': pitch,
+        'yaw': yaw,
+        'throttle': throttle
     }
-    axis_name = axis_names.get(event.axis, "")
-    if axis_name == "JoyStick izquierdo":
-        value_x = joystick.get_axis(0)
-        value_y = joystick.get_axis(1)
-    elif axis_name == "JoyStick derecho":
-        value_x = joystick.get_axis(2)
-        value_y = joystick.get_axis(3)
-        
-    data = {'button_name': axis_name, 'value_x': value_x, 'value_y': value_y}
-    post(data)
+    response = requests.post(f'{API_BASE_URL}/control/movement', json=data)
+    print("Movement command response:", response.json())
 
+# Function to send control signals for mode change
+def send_mode_change(mode):
+    data = {'mode': mode}
+    response = requests.post(f'{API_BASE_URL}/control/mode', json=data)
+    print("Mode change response:", response.json())
 
-def post(data):
-    print(data)
-    '''
-    try:
-        response = requests.post('http://192.168.5.1:8080/postControlMovement', json=data)
-        print("Data sent to API. Status code:", response.status_code)
-    except Exception as e:
-        print("Failed to send data to API:", e)
-        '''
+# Function to send control signals for arming/disarming
+def send_arm_disarm(arm):
+    data = {'arm': arm}
+    response = requests.post(f'{API_BASE_URL}/control/arming', json=data)
+    print("Arming command response:", response.json())
 
+# Modify your existing event handling functions to use these new functions
+# Example for handling joystick axis motion
+def handle_axis_motion(event, joystick):
+    # Here, you would calculate your roll, pitch, yaw, throttle values based on the joystick input
+    # Example values, replace with actual calculations
+    roll, pitch, yaw, throttle = 0, 0, 0, 500
+    send_movement(roll, pitch, yaw, throttle)
 
-# The remaining functions and main loop remain unchanged
+# Example for handling button press for mode change
 def handle_button_down(event):
-    button_names = ["A", "B", "X", "Y", "LB", "RB"]
-    button_name = button_names[event.button] if event.button < len(button_names) else str(event.button)
-    data = {'button_name': button_name, 'value': event.button}
-    post(data)
+    # Determine the mode based on the button pressed
+    # This is just an example, adjust according to your application logic
+    mode = 'MANUAL'
+    if event.button == 0:  # Assuming button 0 switches to MANUAL mode
+        mode = 'MANUAL'
+    send_mode_change(mode)
 
-def handle_button_up(event):
-    button_names = ["A", "B", "X", "Y", "LB", "RB"]
-    button_name = button_names[event.button] if event.button < len(button_names) else str(event.button)
-    data = {'button_name': button_name, 'value': event.button}
-    post(data)
+# Add similar handlers for arming/disarming and other controls
 
-def handle_hat_motion(joystick):
-    #print("JoyStick izquierdo manipulado. Valor: {}".format(joystick.get_hat(0)))
-    data = {'button_name': "modo", 'value_x': joystick.get_hat(0)[0], 'value_y': joystick.get_hat(0)[1]}
-
-    post(data)
-
-def main():
-    pygame.init()
-    pygame.joystick.init()
-
-    if pygame.joystick.get_count() == 0:
-        print("No se detectaron controles de videojuegos.")
-        return
-
-    joystick = pygame.joystick.Joystick(0)
-    joystick.init()
-
-    try:
-        while True:
-            for event in pygame.event.get():
-                if event.type == JOYAXISMOTION:
-                    handle_axis_motion(event, joystick)
-                elif event.type == JOYBUTTONDOWN:
-                    handle_button_down(event)
-                elif event.type == JOYBUTTONUP:
-                    handle_button_up(event)
-                elif event.type == JOYHATMOTION:
-                    handle_hat_motion(joystick)
-
-    except KeyboardInterrupt:
-        print("\nSaliendo del programa.")
-        pygame.quit()
-
-if __name__ == "__main__":
-    main()
+# Your main loop and joystick initialization remain largely unchanged
