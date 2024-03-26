@@ -47,3 +47,32 @@ def handle_button_down(event):
 # Add similar handlers for arming/disarming and other controls
 
 # Your main loop and joystick initialization remain largely unchanged
+def main():
+    pygame.init()
+    pygame.joystick.init()
+
+    if pygame.joystick.get_count() == 0:
+        print("No se detectaron controles de videojuegos.")
+        return
+
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+
+    try:
+        while True:
+            for event in pygame.event.get():
+                if event.type == JOYAXISMOTION:
+                    handle_axis_motion(event, joystick)
+                elif event.type == JOYBUTTONDOWN:
+                    handle_button_down(event)
+                elif event.type == JOYBUTTONUP:
+                    handle_button_up(event)
+                elif event.type == JOYHATMOTION:
+                    handle_hat_motion(joystick)
+
+    except KeyboardInterrupt:
+        print("\nSaliendo del programa.")
+        pygame.quit()
+
+if __name__ == "__main__":
+    main()
