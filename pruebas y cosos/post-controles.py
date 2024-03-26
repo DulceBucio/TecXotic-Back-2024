@@ -22,6 +22,16 @@ arm_disarm = True
 mode = 'MANUAL'
 
 safeZone = 0.012
+power_limit_ref = 1
+
+def calculate_potency(joystick, trigger):
+    temp_power_limit = power_limit_ref.current if trigger else 1.0
+    return int(joystick * RANGE * temp_power_limit)
+
+def calculate_throttle_potency(joystick, trigger):
+    temp_power_limit = power_limit_ref.current if trigger else 1.0
+    return int((-joystick * THROTTLE_RANGE) * temp_power_limit + NEUTRAL_THROTTLE)
+
 
 # Function to handle joystick axis motion
 def handle_axis_motion(event, joystick):
@@ -97,14 +107,16 @@ def main():
                     if data['button_name'] == "JoyStick izquierdo": 
                         lx = data['value_x']
                         ly = data['value_y']
-                        #commands['pitch'] = 1 #calculate_potency(-ly, trigger, power_limit_ref) if ly > safeZone or ly < -safeZone else NEUTRAL
-                        #commands['roll'] = 1 #calculate_potency(lx, trigger, power_limit_ref) if lx > safeZone or lx < -safeZone else NEUTRAL
+                        commands['pitch'] = calculate_potency(-ly, trigger) if ly > safeZone or ly < -safeZone else NEUTRAL
+                        commands['roll'] = calculate_potency(lx, trigger) if lx > safeZone or lx < -safeZone else NEUTRAL
 
                     elif data['button_name'] == "JoyStick derecho":
                         rx = data['value_x']
                         ry = data['value_y']
-                        commands['arduino'] = 5            
-    
+                        commands['arduino'] = 5   
+                        commands['yaw'] = calculate_potency(rx, trigger) if rx > safeZone or rx < -safeZone else NEUTRAL
+                        if(ry > safeZone or ry < -safeZone):
+                            commands['throttle'] = calculate_throttle_potency(ry, trigger)    
                     '''    
                     elif event.type == JOYBUTTONDOWN:
                         handle_button_down(event)
@@ -121,6 +133,8 @@ def main():
                         commands['arduino'] = 3
                     elif(data['button_name'] == "Y"):
                         commands['arduino'] = 2
+                    elif(data['button_name'] == "LB" or data['button_name'] == "RB"):
+                        trigger = True
                     
 
                     
@@ -132,7 +146,6 @@ def main():
                         mode = 'STABILIZE'
                     elif(data['value_x'] == 0 and data['value_y'] == -1):
                         mode = 'ACRO'
-
                 
                 post(commands)
 
