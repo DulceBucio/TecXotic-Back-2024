@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 import sys
 from ConnectionPixhawk import Pixhawk
+from threading import Thread
+
 
 
 app = Flask(__name__)
@@ -44,4 +46,6 @@ def control_arming():
         return jsonify({"success": False, "message": str(e)})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+        # Running the server that delivers video and the task, each request runs on diferent thread
+    Thread(
+            target=lambda: app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False, threaded=True)).start()
