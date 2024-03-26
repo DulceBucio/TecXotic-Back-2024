@@ -104,19 +104,26 @@ def main():
             for event in pygame.event.get(): #Cada que se detecta un evento en el control modificamos los comandos
                 if event.type == JOYAXISMOTION:
                     data = handle_axis_motion(event, joystick)
+                    lx = 0
+                    ly = 0
+                    rx = 0
+                    ry = 0
                     if data['button_name'] == "JoyStick izquierdo": 
                         lx = data['value_x']
                         ly = data['value_y']
-                        commands['pitch'] = calculate_potency(-ly, trigger) if ly > safeZone or ly < -safeZone else NEUTRAL
-                        commands['roll'] = calculate_potency(lx, trigger) if lx > safeZone or lx < -safeZone else NEUTRAL
+
 
                     elif data['button_name'] == "JoyStick derecho":
                         rx = data['value_x']
                         ry = data['value_y']
                         commands['arduino'] = 5   
-                        commands['yaw'] = calculate_potency(rx, trigger) if rx > safeZone or rx < -safeZone else NEUTRAL
-                        if(ry > safeZone or ry < -safeZone):
-                            commands['throttle'] = calculate_throttle_potency(ry, trigger)    
+                    
+                    commands['pitch'] = calculate_potency(-ly, trigger) if ly > safeZone or ly < -safeZone else NEUTRAL
+                    commands['roll'] = calculate_potency(lx, trigger) if lx > safeZone or lx < -safeZone else NEUTRAL
+                    commands['yaw'] = calculate_potency(rx, trigger) if rx > safeZone or rx < -safeZone else NEUTRAL
+                    if(ry > safeZone or ry < -safeZone):
+                        commands['throttle'] = calculate_throttle_potency(ry, trigger)    
+                    post(commands)    
                     '''    
                     elif event.type == JOYBUTTONDOWN:
                         handle_button_down(event)
