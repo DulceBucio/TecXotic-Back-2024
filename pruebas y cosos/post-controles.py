@@ -2,6 +2,7 @@
 import pygame
 from pygame.locals import *
 import requests  # Import the requests library
+import time
 
 RANGE = 1000
 NEUTRAL = 0
@@ -56,8 +57,13 @@ def handle_axis_motion(event, joystick):
 
 
 def post(commands):
-    response = requests.post('http://192.168.5.1:8080/postControlMovement', json=commands)
+    try:
+        response = requests.post('http://192.168.5.1:8080/postControlMovement', json=commands)
+        print("Data sent to API. Status code:", response.status_code)
+    except Exception as e:
+        print("Failed to send data to API:", e)
     print(commands)
+
 
 
 # The remaining functions and main loop remain unchanged
@@ -74,7 +80,6 @@ def handle_button_up(event):
     return data
 
 def handle_hat_motion(joystick):
-    print("JoyStick izquierdo manipulado. Valor: {}".format(joystick.get_hat(0)))
     value_x = joystick.get_hat(0)[0]
     value_y = joystick.get_hat(0)[1]
     data = {'button_name': "modo", 'value_x': value_x, 'value_y': value_y}
@@ -90,6 +95,7 @@ def main():
     joystick.init()
 
     mode = 'MANUAL' #Inicializa el modo de vuelo en MANUAL
+    trigger = False
     try:
         while True:
             commands = { #Cada while se reinicia el diccionario de comandos
@@ -123,7 +129,6 @@ def main():
                     commands['yaw'] = calculate_potency(rx, trigger) if rx > safeZone or rx < -safeZone else NEUTRAL
                     if(ry > safeZone or ry < -safeZone):
                         commands['throttle'] = calculate_throttle_potency(ry, trigger)    
-                    post(commands)    
                     '''    
                     elif event.type == JOYBUTTONDOWN:
                         handle_button_down(event)
@@ -142,7 +147,8 @@ def main():
                         commands['arduino'] = 2
                     elif(data['button_name'] == "LB" or data['button_name'] == "RB"):
                         trigger = True
-                    
+
+
 
                     
                 elif event.type == JOYHATMOTION:
@@ -153,8 +159,9 @@ def main():
                         mode = 'STABILIZE'
                     elif(data['value_x'] == 0 and data['value_y'] == -1):
                         mode = 'ACRO'
-                
                 post(commands)
+
+                
 
 
     except KeyboardInterrupt:
