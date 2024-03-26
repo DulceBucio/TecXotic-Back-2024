@@ -178,6 +178,7 @@ if __name__ == "__main__":
             'arm_disarm': True,
             'mode': mode,
             'arduino': 0,
+            'imu': True
         }   
         print("Iniciando programa.")
         print(commands )
