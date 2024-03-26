@@ -46,7 +46,7 @@ def handle_axis_motion(event, joystick):
 
 
 def post(commands):
-    #response = requests.post('http://192.168.5.1:8080/postControlMovement', json=commands)
+    response = requests.post('http://192.168.5.1:8080/postControlMovement', json=commands)
     print(commands)
 
 
