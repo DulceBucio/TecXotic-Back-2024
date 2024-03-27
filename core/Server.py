@@ -1,8 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from ConnectionPixhawk import Pixhawk
 from threading import Thread
+from Capture import Capture, generate
+
 
 app = Flask(__name__)
+
+'''
 
 # Conexión a la Pixhawk
 try:
@@ -47,6 +51,19 @@ def post_control_movement():
     }
 
     return jsonify(response)
+'''
+
+cap1 = Capture()
+
+@app.route('/video1', methods=['GET'])
+def video1():
+    return Response(generate(cap1),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
+def release_video():
+    # Releasing video
+    cap1.release()
+
+
 
 if __name__ == '__main__':
     Thread(
