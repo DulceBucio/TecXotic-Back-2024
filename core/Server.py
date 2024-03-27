@@ -6,7 +6,6 @@ from Capture import Capture, generate
 
 app = Flask(__name__)
 
-'''
 
 # Conexión a la Pixhawk
 try:
@@ -51,7 +50,7 @@ def post_control_movement():
     }
 
     return jsonify(response)
-'''
+
 
 cap1 = Capture()
 
