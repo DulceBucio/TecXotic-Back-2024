@@ -60,7 +60,7 @@ def post(commands):
     try:
         response = requests.post('http://192.168.5.1:8080/postControlMovement', json=commands)
         print("Data sent to API. Status code:", response.status_code)
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         print("Failed to send data to API:", e)
     print(commands)
 
