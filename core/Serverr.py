@@ -1,9 +1,11 @@
-from flask import Flask, request, jsonify, Response
-from ConnectionPixhawk import Pixhawk
+from flask import Flask, request, jsonify, Response, Blueprint
+from flask_cors import CORS
+from core.ConnectionPixhawk import Pixhawk
 from threading import Thread
-from Capture import Capture, generate
+#from core.Capture import Capture, generate
 
-app = Flask(__name__)
+pwm = Blueprint('pwm', __name__)
+CORS(pwm)
 
 # Conexión a la Pixhawk
 try:
@@ -12,7 +14,7 @@ except Exception as e:
     print(f"Initialization error: {e}")
 
 # Endpoint que recibe información de control de movimiento y ejecuta funciones de la px
-@app.route('/postControlMovement', methods=['POST'])
+@pwm.route('/postControlMovement', methods=['POST'])
 def post_control_movement():
     commands = request.json
     
@@ -49,15 +51,18 @@ def post_control_movement():
         print(f"Error handling control movement: {e}")
         return jsonify({"error": str(e)}), 500
 
-cap1 = Capture()
+# cap1 = Capture()
 
-@app.route('/video1', methods=['GET'])
-def video1():
-    return Response(generate(cap1), mimetype="multipart/x-mixed-replace; boundary=frame")
+# @app.route('/video1', methods=['GET'])
+# def video1():
+#     return Response(generate(cap1), mimetype="multipart/x-mixed-replace; boundary=frame")
 
-def release_video():
-    # Releasing video
-    cap1.release()
+# def release_video():
+#     # Releasing video
+#     cap1.release()
 
-if __name__ == '__main__':
-    Thread(target=lambda: app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False, threaded=True)).start()
+# def run():
+#     Thread(target=lambda: app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False, threaded=True)).start()
+
+# if __name__ == '__main__':
+#     run()
