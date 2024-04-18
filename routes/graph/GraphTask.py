@@ -1,14 +1,16 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, Blueprint, current_app
 from flask_cors import CORS
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
+from flask import send_from_directory
+import os
 
-app = Flask(__name__)
-CORS(app)
+graph_blueprint = Blueprint('graph', __name__)
+CORS(graph_blueprint)
 
-@app.route('/upload', methods=['POST'])
+@graph_blueprint.route('/upload', methods=['POST'])
 def upload_file():
     file = request.files['file']
     
@@ -38,19 +40,20 @@ def upload_file():
         plt.legend()
         plt.grid(True)
         
-        plt.savefig('temp_plot.png')
+        temp_directory = os.path.join(current_app.root_path, 'tmp')
+        if not os.path.exists(temp_directory):
+            os.makedirs(temp_directory)
+
+        plot_path = os.path.join(temp_directory, "temp_plot.png")
+        plt.savefig(plot_path)
         plt.close()
         
-        # Retorna la ruta de la imagen
-        return send_file('temp_plot.png', mimetype='image/png')
+        return send_file(plot_path, mimetype='image/png')
 
     return 'Format not supported. Please upload a CSV file :('
 
-from flask import send_from_directory
-
-@app.route('/image/<filename>')
+@graph_blueprint.route('/image/<filename>')
 def get_image(filename):
-    return send_from_directory(app.root_path, filename)
+    temp_directory = os.path.join(current_app.root_path, 'tmp')
+    return send_from_directory(temp_directory, filename)
 
-if __name__ == '__main__':
-    app.run(debug=True)
