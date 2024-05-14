@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, Response, Blueprint
 from flask_cors import CORS
 from core.ConnectionPixhawk import Pixhawk
 from threading import Thread
-#from core.Capture import Capture, generate
 
 pwm = Blueprint('pwm', __name__)
 CORS(pwm)
@@ -50,19 +49,3 @@ def post_control_movement():
     except Exception as e:
         print(f"Error handling control movement: {e}")
         return jsonify({"error": str(e)}), 500
-
-# cap1 = Capture()
-
-# @app.route('/video1', methods=['GET'])
-# def video1():
-#     return Response(generate(cap1), mimetype="multipart/x-mixed-replace; boundary=frame")
-
-# def release_video():
-#     # Releasing video
-#     cap1.release()
-
-# def run():
-#     Thread(target=lambda: app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False, threaded=True)).start()
-
-# if __name__ == '__main__':
-#     run()

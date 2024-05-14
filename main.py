@@ -5,6 +5,7 @@ from flask_cors import CORS
 from core.Serverr import pwm
 from routes.CamServer import camServer
 from routes.graph.GraphTask import graph_blueprint
+from routes.ButtonsFunctionality import buttons_functionality
 
 
 
@@ -14,6 +15,7 @@ CORS(app)
 app.register_blueprint(graph_blueprint, url_prefix='/graph')
 app.register_blueprint(camServer)
 app.register_blueprint(pwm)
+app.register_blueprint(buttons_functionality)
 
 
 if __name__ == '__main__':
