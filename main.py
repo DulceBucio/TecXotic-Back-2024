@@ -14,7 +14,7 @@ CORS(app)
 
 app.register_blueprint(graph_blueprint, url_prefix='/graph')
 app.register_blueprint(camServer)
-app.register_blueprint(pwm)
+#app.register_blueprint(pwm)
 app.register_blueprint(buttons_functionality)
 
 

@@ -7,10 +7,10 @@ pwm = Blueprint('pwm', __name__)
 CORS(pwm)
 
 # Conexión a la Pixhawk
-try:
-    px = Pixhawk(direction='/dev/serial/by-id/usb-ArduPilot_Pixhawk1_380020000A51353338353732-if00')
-except Exception as e:
-    print(f"Initialization error: {e}")
+#try:
+#    px = Pixhawk(direction='/dev/serial/by-id/usb-ArduPilot_Pixhawk1_380020000A51353338353732-if00')
+#except Exception as e:
+#    print(f"Initialization error: {e}")
 
 # Endpoint que recibe información de control de movimiento y ejecuta funciones de la px
 @pwm.route('/postControlMovement', methods=['POST'])

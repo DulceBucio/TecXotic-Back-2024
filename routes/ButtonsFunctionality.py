@@ -3,6 +3,7 @@ from flask import Flask, request, Blueprint
 from flask_cors import CORS
 import serial
 
+
 buttons_functionality = Blueprint('buttons_functionality', __name__)
 CORS(buttons_functionality)
 
