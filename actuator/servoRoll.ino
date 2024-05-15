@@ -23,10 +23,10 @@ void loop() {
         servoRoll.write(0); // Mover el servo a 0 grados
         break;
       case 3:
-        servoClaw.write(45); // Mover la garra a 90 grados
+        servoClaw.write(15); // dpad up
         break;
       case 4:
-        servoClaw.write(90); // Mover la garra a 0 grado
+        servoClaw.write(23); // dpad down (open)
         break;
       case 5:
         servoClaw.write(0);
