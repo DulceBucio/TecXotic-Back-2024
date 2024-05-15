@@ -5,48 +5,45 @@ import requests
 # Constants for servo control
 SERVO_MIN = 0
 SERVO_MAX = 180
-SERVO_MID = 0
+SERVO_MID = (SERVO_MAX + SERVO_MIN) // 2  # Correct midpoint calculation
 servo_position = SERVO_MID  # Start at the midpoint
 
 # Define the step size for each joystick movement
-STEP_SIZE = 45
- # Adjust this value to control the movement speed
+STEP_SIZE = 45  # Adjust this value to control the movement speed
 
 # Function to send servo position to the Arduino
-def post_servo_position(position):
+def post_actuator_data(position):
     url = 'http://192.168.5.1:8080/actuators'
     try:
-        # Ensure the position is sent as a string
-        response = requests.post(url, json={"actions": str(position)})
+        # Ensure the position is sent as a string or as a dictionary directly
+        data = {"actions": position} if isinstance(position, str) else {"actions": str(position)}
+        response = requests.post(url, json=data)
         print("Data sent to actuators. Status code:", response.status_code)
         if response.status_code != 200:
             print("Error from server:", response.text)
     except requests.exceptions.RequestException as e:
         print("Failed to send data to actuators:", e)
 
-def handle_hat_motion(hat_value):
-    global servo_position
-    
-    if hat_value[0] == -1:  # Left roll
-        # Move to the previous allowed position
-        if servo_position == SERVO_MID:
-            servo_position = SERVO_MIN
-        elif servo_position == SERVO_MAX:
-            servo_position = SERVO_MID
-        # If at SERVO_MIN, it should stay at SERVO_MIN (or wrap around based on design choice)
-        
-    elif hat_value[0] == 1:  # Right roll
-        # Move to the next allowed position
-        if servo_position == SERVO_MID:
-            servo_position = SERVO_MAX
-        elif servo_position == SERVO_MIN:
-            servo_position = SERVO_MID
-        # If at SERVO_MAX, it should stay at SERVO_MAX (or wrap around based on design choice)
-    
-    post_servo_position(servo_position)
-    print(f"Moved to {servo_position}...")
+# Function to handle hat motion events and send roll commands
+def handle_hat_motion(joystick):
+    value_x, value_y = joystick.get_hat(0)
+    data = {'button_name': "DPad", 'value_x': value_x, 'value_y': value_y}
+
+    # Define commands for left and right rolls
+    if value_x == -1:  # Left roll
+        post_actuator_data('LEFTROLL')
+    elif value_x == 1:  # Right roll
+        post_actuator_data('RIGHTROLL')
+    elif value_y == -1 and value_x == 0:
+        post_actuator_data('CLAW_OPEN')
+    elif value_y == 1 and value_x == 0:
+        post_actuator_data('CLAW_MIDOPEN')
+
+    return data
 
 def main():
+    global servo_position
+
     pygame.init()
     pygame.joystick.init()
     
@@ -63,16 +60,19 @@ def main():
             pygame.event.pump()
             for event in pygame.event.get():
                 if event.type == JOYBUTTONDOWN:
-                    # Check for Select button; adjust '6' if needed based on your controller
-                    if event.button == 6:  # Often the 'Select' button
+                    if event.button == 6:  # 'Select' button
                         print("Select button pressed - Resetting servo position")
-                        servo_position = SERVO_MID
-                        post_servo_position(servo_position)
+                        servo_position = 0
+                        post_actuator_data(servo_position)
+                    elif event.button == 7:  # 'Start' button
+                        print("Start button pressed - Resetting servo position")
+                        servo_position = 180
+                        post_actuator_data('CLAW_CLOSE')
                     else:
                         print(f"Button {event.button} pressed")
                 
                 elif event.type == JOYHATMOTION:
-                    handle_hat_motion(event.value)
+                    handle_hat_motion(joystick)  # Pass joystick, not event.value
 
             pygame.time.wait(100)
 
@@ -82,5 +82,6 @@ def main():
         pygame.quit()
 
 if __name__ == "__main__":
+    post_actuator_data(servo_position)
     print("Starting joystick control program.")
     main()

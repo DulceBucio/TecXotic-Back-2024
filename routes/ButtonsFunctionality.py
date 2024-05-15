@@ -40,14 +40,15 @@ def send_actions():
     data = request.get_json()
     action = data.get("actions")
 
-    # Map predefined commands to specific strings
     command_map = {
+        "STOP": "0",
         "LEFTROLL": "1",
         "RIGHTROLL": "2",
-        "STOP": "0"
+        "CLAW_MIDOPEN" : "3",
+        "CLAW_OPEN" :"4",
+        "CLAW_CLOSE" : "5"
     }
 
-    # Check if the action is a predefined command
     command = command_map.get(action)
 
     if command:
@@ -64,6 +65,9 @@ def send_actions():
             return jsonify({"message": "Invalid command", "status": "error"}), 400
 
     return jsonify({"message": "Command sent", "status": "success"})
+
+
+                                    
 
 
                                                                                                      

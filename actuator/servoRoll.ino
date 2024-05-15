@@ -1,23 +1,37 @@
 #include <Servo.h>
 
-Servo servoRoll;  // Create a servo object
-Servo servoClaw;
-
-// This will store the angle for the servo
-int servoAngle = 0;  // Start at the midpoint, 90 degrees
+Servo servoRoll;  // Servo para el roll
+Servo servoClaw;  // Servo para la garra
+int servoAngle = 90;
 
 void setup() {
-  Serial.begin(9600);  
-  servoRoll.attach(7);  // Attach servo on pin 12
-  servoClaw.attach(6); 
+  Serial.begin(9600);
+  servoRoll.attach(7);  // Pin 9 para el servoRoll
+  servoClaw.attach(6); // Pin 10 para el servoClaw
 }
 
 void loop() {
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n'); // Read the incoming data as string until newline
-    servoAngle = command.toInt(); // Convert the string to integer
-    servoRoll.write(servoAngle);  // Set the servo position
-  }
+    int commandInt = command.toInt(); // Convert the string to integer
 
-  delay(15);  // Small delay to prevent overwhelming the servo
+    switch (commandInt) {
+      case 1:
+        servoRoll.write(180); // Mover el servo a 180 grados
+        break;
+      case 2:
+        servoRoll.write(0); // Mover el servo a 0 grados
+        break;
+      case 3:
+        servoClaw.write(45); // Mover la garra a 90 grados
+        break;
+      case 4:
+        servoClaw.write(90); // Mover la garra a 0 grado
+        break;
+      case 5:
+        servoClaw.write(0);
+      default:
+        break;
+    }
+  }
 }
