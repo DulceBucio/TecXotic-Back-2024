@@ -161,7 +161,6 @@ def main():
                         handle_button_down(event)
                     '''
 
-
                 elif event.type == JOYBUTTONUP:
                     data = handle_button_up(event)
                     if(data['button_name'] == "A"):
@@ -177,15 +176,36 @@ def main():
 
 
 
-                    
+                elif event.type == JOYBUTTONDOWN:
+                    if event.button == 6:  # 'Select' button
+                        print("Select button pressed - Resetting servo position")
+                        servo_position = 0
+                        post_servo(servo_position)
+                    elif event.button == 7:  # 'Start' button
+                        print("Start button pressed - Resetting servo position")
+                        servo_position = 180
+                        post_servo('CLAW_CLOSE')
+                    else:
+                        print(f"Button {event.button} pressed")
+                
                 elif event.type == JOYHATMOTION:
-                    data = handle_hat_motion(joystick)
-                    if(data['value_x'] == 1 and data['value_y'] == 0):
-                        mode = 'MANUAL'
-                    elif(data['value_x'] == 0 and data['value_y'] == 1):
-                        mode = 'STABILIZE'
-                    elif(data['value_x'] == 0 and data['value_y'] == -1):
+                    handle_hat_motion(joystick)  # Pass joystick, not event.value    
+
+                elif event.type == JOYBUTTONUP:
+                    data = handle_button_up(event)
+                    if(data['button_name'] == "A"):
                         mode = 'ACRO'
+                    elif(data['button_name'] == "B"):
+                        mode = 'MANUAL'
+                    elif(data['button_name'] == "Y"):
+                        mode = 'STABILIZE'
+                    elif(data['button_name'] == "LB" or data['button_name'] == "RB"):
+                        trigger = True
+                                
+                elif event.type == JOYHATMOTION:
+                    handle_hat_motion(joystick)  # Pass joystick, not event.value
+
+
                 post(commands)
 
                 
@@ -210,8 +230,8 @@ if __name__ == "__main__":
         print("Iniciando programa.")
         print(commands )
         post(commands)
+        post_servo(servo_position)
         counter += 1
-    post_servo(servo_position)
     main()
 
 
