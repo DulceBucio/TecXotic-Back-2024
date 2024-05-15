@@ -9,11 +9,13 @@ NEUTRAL = 0
 THROTTLE_RANGE = 500
 NEUTRAL_THROTTLE = 500
 
+SERVOROLL_MIN = 0
+SERVOROLL_MAX = 180
+servoRoll_position = SERVOROLL_MIN  
+STEP_SIZE = 90  
 
 counter = 0
 
-
-arduino = 0
 throttle = 500,
 roll = 0
 pitch = 0
@@ -24,6 +26,17 @@ mode = 'MANUAL'
 
 safeZone = 0.012
 power_limit_ref = 1
+
+def post_servo_position(position):
+    url = 'http://192.168.5.1:8080/actuators'
+    try:
+        # Ensure the position is sent as a string
+        response = requests.post(url, json={"actions": str(position)})
+        print("Data sent to actuators. Status code:", response.status_code)
+        if response.status_code != 200:
+            print("Error from server:", response.text)
+    except requests.exceptions.RequestException as e:
+        print("Failed to send data to actuators:", e)
 
 def calculate_potency(joystick, trigger):
     temp_power_limit = power_limit_ref.current if trigger else 1.0
@@ -79,11 +92,24 @@ def handle_button_up(event):
     data = {'button_name': button_name, 'value': event.button}
     return data
 
-def handle_hat_motion(joystick):
-    value_x = joystick.get_hat(0)[0]
-    value_y = joystick.get_hat(0)[1]
-    data = {'button_name': "modo", 'value_x': value_x, 'value_y': value_y}
-    return data
+def handle_hat_motion(hat_value):
+    global servoRoll_position
+    
+    if hat_value[0] == -1:  # Left roll
+        servoRoll_position -= STEP_SIZE
+        if servoRoll_position < SERVOROLL_MIN:
+            # Wrap around if the position goes below the minimum
+            servoRoll_position = SERVOROLL_MAX - (SERVOROLL_MIN - servoRoll_position - 1) % (SERVOROLL_MAX + 1)
+        post_servo_position(servoRoll_position)
+        print(f"Rolling Left to {servoRoll_position}...")
+        
+    elif hat_value[0] == 1:  # Right roll
+        servoRoll_position += STEP_SIZE
+        if servoRoll_position > SERVOROLL_MAX:
+            # Wrap around if the position goes above the maximum
+            servoRoll_position = SERVOROLL_MIN + (servoRoll_position - SERVOROLL_MAX - 1) % (SERVOROLL_MAX + 1)
+        post_servo_position(servoRoll_position)
+        print(f"Rolling Right to {servoRoll_position}...")
 
 def main():
     pygame.init()
@@ -152,14 +178,7 @@ def main():
 
                     
                 elif event.type == JOYHATMOTION:
-                    data = handle_hat_motion(joystick)
-                    if(data['value_x'] == 1 and data['value_y'] == 0):
-                        mode = 'MANUAL'
-                    elif(data['value_x'] == 0 and data['value_y'] == 1):
-                        mode = 'STABILIZE'
-                    elif(data['value_x'] == 0 and data['value_y'] == -1):
-                        mode = 'ACRO'
-                post(commands)
+                    handle_hat_motion(event.value)
 
                 
 
