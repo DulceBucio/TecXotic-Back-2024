@@ -2,68 +2,49 @@ import pygame
 from pygame.locals import *
 import requests
 
-# Constants
-RANGE = 1000
-NEUTRAL = 0
-THROTTLE_RANGE = 500
-NEUTRAL_THROTTLE = 500
+# Constants for servo control
+SERVO_MIN = 0
+SERVO_MAX = 180
+SERVO_MID = 90
+servo_position = SERVO_MID  # Start at the midpoint
 
-# Initial values
-throttle = 500
-roll = 0
-pitch = 0
-yaw = 0
-arm_disarm = True
-mode = 'MANUAL'
-safeZone = 0.012
-power_limit_ref = 1
+# Define the step size for each joystick movement
+STEP_SIZE = 90  # Adjust this value to control the movement speed
 
-def calculate_potency(joystick, trigger):
-    temp_power_limit = power_limit_ref if not trigger else 1.0
-    return int(joystick * RANGE * temp_power_limit)
-
-def calculate_throttle_potency(joystick, trigger):
-    temp_power_limit = power_limit_ref if not trigger else 1.0
-    return int((-joystick * THROTTLE_RANGE) * temp_power_limit + NEUTRAL_THROTTLE)
-
-def post_actuator_data(commands):
-    url_actuators = 'http://192.168.5.1:8080/actuators'
+# Function to send servo position to the Arduino
+def post_servo_position(position):
+    url = 'http://192.168.5.1:8080/actuators'
     try:
-        response_actuators = requests.post(url_actuators, json=commands)
-        print("Data sent to actuators. Status code:", response_actuators.status_code)
-        if response_actuators.status_code != 200:
-            print("Error from server:", response_actuators.text)
+        # Ensure the position is sent as a string
+        response = requests.post(url, json={"actions": str(position)})
+        print("Data sent to actuators. Status code:", response.status_code)
+        if response.status_code != 200:
+            print("Error from server:", response.text)
     except requests.exceptions.RequestException as e:
         print("Failed to send data to actuators:", e)
 
-def handle_button_down(event):
-    button_names = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "Select", "Start"]
-    if event.button < len(button_names):
-        button_name = button_names[event.button]
-        data = {'button_name': button_name, 'value': event.button}
-        print(f"Button {button_name} pressed.")
-        post_actuator_data({'actions': str(event.button)})
-    else:
-        print(f"Button {event.button} pressed.")
-
 def handle_hat_motion(hat_value):
+    global servo_position
+    
     if hat_value[0] == -1:  # Left roll
-        post_actuator_data({'actions': 'LEFTROLL'})
-        print("Rolling Left...")
+        servo_position -= STEP_SIZE
+        if servo_position < SERVO_MIN:
+            servo_position = SERVO_MAX - (SERVO_MIN - servo_position - 1) % (SERVO_MAX + 1)
+        post_servo_position(servo_position)
+        print(f"Rolling Left to {servo_position}...")
+        
     elif hat_value[0] == 1:  # Right roll
-        post_actuator_data({'actions': 'RIGHTROLL'})
-        print("Rolling Right...")
-    elif hat_value[1] == 1:  # Up (adjust action if needed)
-        post_actuator_data({'actions': 'UP'})  # Example: Adjust if you have 'UP' action
-        print("Moving Up...")
-    elif hat_value[1] == -1:  # Down (adjust action if needed)
-        post_actuator_data({'actions': 'DOWN'})  # Example: Adjust if you have 'DOWN' action
-        print("Moving Down...")
+        servo_position += STEP_SIZE
+        if servo_position > SERVO_MAX:
+            servo_position = SERVO_MIN + (servo_position - SERVO_MAX - 1) % (SERVO_MAX + 1)
+        post_servo_position(servo_position)
+        print(f"Rolling Right to {servo_position}...")
 
 def main():
     pygame.init()
     pygame.joystick.init()
     
+    # Check if there are any joysticks connected
     if pygame.joystick.get_count() == 0:
         print("No joysticks detected.")
         return
@@ -73,11 +54,21 @@ def main():
 
     try:
         while True:
+            pygame.event.pump()
             for event in pygame.event.get():
                 if event.type == JOYBUTTONDOWN:
-                    handle_button_down(event)
+                    # Check for Select button; adjust '6' if needed based on your controller
+                    if event.button == 6:  # Often the 'Select' button
+                        print("Select button pressed - Resetting servo position")
+                        servo_position = SERVO_MID
+                        post_servo_position(servo_position)
+                    else:
+                        print(f"Button {event.button} pressed")
+                
                 elif event.type == JOYHATMOTION:
                     handle_hat_motion(event.value)
+
+            pygame.time.wait(100)
 
     except KeyboardInterrupt:
         print("\nExiting the program.")

@@ -16,10 +16,9 @@ def init_serial_connection(port='/dev/ttyUSB0', baudrate=9600):
         print("Arduino connected")
         return arduino
     except Exception as e:
-        print("ERROR in ButtonsFunctionality.py, serial route not founded: " + str(e))
+        print(f"ERROR in serial connection initialization: {e}")
         return None
 
-# Get the Arduino connection
 arduino = init_serial_connection()
 
 def send(message):
@@ -29,30 +28,41 @@ def send(message):
         arduino.write(message_str.encode('utf-8'))
         time.sleep(0.5)  # Give time for Arduino to process the command
     except Exception as e:
-        print("ERROR in ButtonsFunctionality.py, arduino.write failed: " + str(e))
+        print(f"ERROR during command send: {e}")
         if arduino:
             arduino.close()
 
 @buttons_functionality.route('/actuators', methods=['POST'])
 def send_actions():
     if not arduino:
-        return "Arduino not connected", 500
-    data = request.get_json()
-    print('json_response: ', str(data["actions"]))
+        return jsonify({"message": "Arduino not connected", "status": "error"}), 500
 
-    # Map commands to integers
+    data = request.get_json()
+    
+    # Map predefined commands to specific strings
     command_map = {
-        "LEFTROLL": 1,
-        "RIGHTROLL": 2,
-        "STOP": 0
+        "LEFTROLL": "1",
+        "RIGHTROLL": "2",
+        "STOP": "0"
     }
 
-    command = command_map.get(data["actions"], None)
+    # Check if the action is a predefined command
+    command = command_map.get(action)
 
-    if command is not None:
-        send(str(command))  # Convert command to string
-        return jsonify({"message": "Command sent", "status": "success"})
+    if command:
+        send(command)
     else:
-        return jsonify({"message": "Invalid command", "status": "error"}), 400
+        try:
+            # Attempt to convert the action to an integer
+            position = int(action)
+            if 0 <= position <= 180:
+                send(str(position))
+            else:
+                raise ValueError("Position out of range")
+        except (ValueError, TypeError):
+            return jsonify({"message": "Invalid command", "status": "error"}), 400
 
-                                                                                                  
+    return jsonify({"message": "Command sent", "status": "success"})
+
+
+                                                                                                     
