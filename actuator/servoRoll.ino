@@ -1,13 +1,15 @@
 #include <Servo.h>
 
 Servo servoRoll;  // Create a servo object
+Servo servoClaw;
 
 // This will store the angle for the servo
-int servoAngle = 90;  // Start at the midpoint, 90 degrees
+int servoAngle = 0;  // Start at the midpoint, 90 degrees
 
 void setup() {
   Serial.begin(9600);  
-  servoRoll.attach(13);  // Attach servo on pin 12
+  servoRoll.attach(7);  // Attach servo on pin 12
+  servoClaw.attach(6); 
 }
 
 void loop() {
