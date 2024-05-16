@@ -24,7 +24,7 @@ arduino = init_serial_connection()
 def send(message):
     try:
         # Ensure the message is a string and ends with a newline
-        message_str = message
+        message_str = f"{message}\n"
         arduino.write(message_str.encode('utf-8'))
         time.sleep(0.5)  # Give time for Arduino to process the command
     except Exception as e:
@@ -41,12 +41,12 @@ def send_actions():
     action = data.get("actions")
 
     command_map = {
-        "STOP": 0,
-        "LEFTROLL": 1,
-        "RIGHTROLL": 2,
-        "CLAW_MIDOPEN" : 3,
-        "CLAW_OPEN" : 4,
-        "CLAW_CLOSE" : 5
+        "STOP": "0",
+        "LEFTROLL": "1",
+        "RIGHTROLL": "2",
+        "CLAW_MIDOPEN" : "3",
+        "CLAW_OPEN" :"4",
+        "CLAW_CLOSE" : "5"
     }
 
     command = command_map.get(action)
