@@ -9,7 +9,7 @@ buttons_functionality = Blueprint('buttons_functionality', __name__)
 CORS(buttons_functionality)
 
 # Initialize serial connection
-def init_serial_connection(port='/dev/ttyACM0', baudrate=9600):
+def init_serial_connection(port='/dev/ttyUSB0', baudrate=9600):
     try:
         arduino = serial.Serial(port, baudrate=baudrate, timeout=1)
         time.sleep(2)  # Give time for Arduino's reset and bootloader
