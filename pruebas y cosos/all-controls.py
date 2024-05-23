@@ -33,17 +33,16 @@ SERVO_MID = (SERVO_MAX + SERVO_MIN) // 2  # Correct midpoint calculation
 servo_position = SERVO_MID  # Start at the midpoint
 
 def calculate_potency(joystick, trigger):
-    temp_power_limit = power_limit_ref.current if trigger else 1.0
+    temp_power_limit = power_limit_ref if trigger else 1.0
     return int(joystick * RANGE * temp_power_limit)
 
 def calculate_throttle_potency(joystick, trigger):
-    temp_power_limit = power_limit_ref.current if trigger else 1.0
+    temp_power_limit = power_limit_ref if trigger else 1.0
     return int((-joystick * THROTTLE_RANGE) * temp_power_limit + NEUTRAL_THROTTLE)
 
 
 # Function to handle joystick axis motion
 def handle_axis_motion(event, joystick):
-    #print("Axis motion:", event.axis, "Value:", event.value)
     axis_names = {
         0: "JoyStick izquierdo",
         1: "JoyStick izquierdo",
@@ -51,6 +50,7 @@ def handle_axis_motion(event, joystick):
         3: "JoyStick derecho", 
     }
     axis_name = axis_names.get(event.axis, "")
+    value_x, value_y = 0, 0
     if axis_name == "JoyStick izquierdo":
         value_x = joystick.get_axis(0)
         value_y = joystick.get_axis(1)
@@ -58,7 +58,6 @@ def handle_axis_motion(event, joystick):
         value_x = joystick.get_axis(2)
         value_y = joystick.get_axis(3)
 
-        
     data = {'button_name': axis_name, 'value_x': value_x, 'value_y': value_y}
     return data
 
@@ -121,11 +120,11 @@ def main():
     joystick = pygame.joystick.Joystick(0)
     joystick.init()
 
-    mode = 'MANUAL' #Inicializa el modo de vuelo en MANUAL
+    mode = 'MANUAL' # Inicializa el modo de vuelo en MANUAL
     trigger = False
     try:
         while True:
-            commands = { #Cada while se reinicia el diccionario de comandos
+            commands = { # Cada while se reinicia el diccionario de comandos
                 'throttle': 500,
                 'roll': 0,
                 'pitch': 0,
@@ -134,7 +133,7 @@ def main():
                 'mode': mode,
                 'arduino': 0,
             }                   
-            for event in pygame.event.get(): #Cada que se detecta un evento en el control modificamos los comandos
+            for event in pygame.event.get(): # Cada que se detecta un evento en el control modificamos los comandos
                 if event.type == JOYAXISMOTION:
                     data = handle_axis_motion(event, joystick)
                     lx = 0
@@ -144,37 +143,29 @@ def main():
                     if data['button_name'] == "JoyStick izquierdo": 
                         lx = data['value_x']
                         ly = data['value_y']
-
-
                     elif data['button_name'] == "JoyStick derecho":
                         rx = data['value_x']
                         ry = data['value_y']
                         commands['arduino'] = 5   
-                    
-                    commands['pitch'] = calculate_potency(-ly, trigger) if ly > safeZone or ly < -safeZone else NEUTRAL
-                    commands['roll'] = calculate_potency(lx, trigger) if lx > safeZone or lx < -safeZone else NEUTRAL
-                    commands['yaw'] = calculate_potency(rx, trigger) if rx > safeZone or rx < -safeZone else NEUTRAL
-                    if(ry > safeZone or ry < -safeZone):
+
+                    commands['pitch'] = calculate_potency(-ly, trigger) if abs(ly) > safeZone else NEUTRAL
+                    commands['roll'] = calculate_potency(lx, trigger) if abs(lx) > safeZone else NEUTRAL
+                    commands['yaw'] = calculate_potency(rx, trigger) if abs(rx) > safeZone else NEUTRAL
+                    if abs(ry) > safeZone:
                         commands['throttle'] = calculate_throttle_potency(ry, trigger)    
-                    '''    
-                    elif event.type == JOYBUTTONDOWN:
-                        handle_button_down(event)
-                    '''
 
                 elif event.type == JOYBUTTONUP:
                     data = handle_button_up(event)
-                    if(data['button_name'] == "A"):
+                    if data['button_name'] == "A":
                         commands['arduino'] = 1
-                    elif(data['button_name'] == "B"):
+                    elif data['button_name'] == "B":
                         commands['arduino'] = 4
-                    elif(data['button_name'] == "X"):
+                    elif data['button_name'] == "X":
                         commands['arduino'] = 3
-                    elif(data['button_name'] == "Y"):
+                    elif data['button_name'] == "Y":
                         commands['arduino'] = 2
-                    elif(data['button_name'] == "LB" or data['button_name'] == "RB"):
+                    elif data['button_name'] == "LB" or data['button_name'] == "RB":
                         trigger = True
-
-
 
                 elif event.type == JOYBUTTONDOWN:
                     if event.button == 6:  # 'Select' button
@@ -193,23 +184,19 @@ def main():
 
                 elif event.type == JOYBUTTONUP:
                     data = handle_button_up(event)
-                    if(data['button_name'] == "A"):
+                    if data['button_name'] == "A":
                         mode = 'ACRO'
-                    elif(data['button_name'] == "B"):
+                    elif data['button_name'] == "B":
                         mode = 'MANUAL'
-                    elif(data['button_name'] == "Y"):
+                    elif data['button_name'] == "Y":
                         mode = 'STABILIZE'
-                    elif(data['button_name'] == "LB" or data['button_name'] == "RB"):
+                    elif data['button_name'] == "LB" or data['button_name'] == "RB":
                         trigger = True
                                 
                 elif event.type == JOYHATMOTION:
                     handle_hat_motion(joystick)  # Pass joystick, not event.value
 
-
                 post(commands)
-
-                
-
 
     except KeyboardInterrupt:
         print("\nSaliendo del programa.")
@@ -217,7 +204,7 @@ def main():
 
 if __name__ == "__main__":
     if counter == 0:
-        commands = { #Cada while se reinicia el diccionario de comandos
+        commands = { # Cada while se reinicia el diccionario de comandos
             'throttle': 500,
             'roll': 0,
             'pitch': 0,
@@ -228,12 +215,8 @@ if __name__ == "__main__":
             'imu': True
         }   
         print("Iniciando programa.")
-        print(commands )
+        print(commands)
         post(commands)
         post_servo(servo_position)
         counter += 1
     main()
-
-
-
-
