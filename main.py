@@ -6,6 +6,7 @@ from core.Serverr import pwm
 from routes.CamServer import camServer
 from routes.graph.GraphTask import graph_blueprint
 from routes.ButtonsFunctionality import buttons_functionality
+from routes.PhotogammetryTask import photogammetry_blueprint
 
 
 
@@ -16,6 +17,7 @@ app.register_blueprint(graph_blueprint, url_prefix='/graph')
 app.register_blueprint(camServer)
 app.register_blueprint(pwm)
 app.register_blueprint(buttons_functionality)
+app.register_blueprint(photogammetry_blueprint, url_prefix='/photogammetry')
 
 
 if __name__ == '__main__':

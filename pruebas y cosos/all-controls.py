@@ -53,10 +53,14 @@ def handle_axis_motion(event, joystick):
     value_x, value_y = 0, 0
     if axis_name == "JoyStick izquierdo":
         value_x = joystick.get_axis(0)
+        value_x = -value_x
         value_y = joystick.get_axis(1)
+        value_y = -value_y
     elif axis_name == "JoyStick derecho":
         value_x = joystick.get_axis(2)
+        value_x = -value_x
         value_y = joystick.get_axis(3)
+        value_y = -value_y
 
     data = {'button_name': axis_name, 'value_x': value_x, 'value_y': value_y}
     return data
