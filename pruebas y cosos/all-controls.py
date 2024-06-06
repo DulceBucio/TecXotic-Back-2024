@@ -9,9 +9,7 @@ NEUTRAL = 0
 THROTTLE_RANGE = 500
 NEUTRAL_THROTTLE = 500
 
-
 counter = 0
-
 
 arduino = 0
 throttle = 500,
@@ -85,6 +83,7 @@ def post_servo(position):
             print("Error from server:", response.text)
     except requests.exceptions.RequestException as e:
         print("Failed to send data to actuators:", e)
+
 
 # The remaining functions and main loop remain unchanged
 def handle_button_down(event):
@@ -161,13 +160,11 @@ def main():
                 elif event.type == JOYBUTTONUP:
                     data = handle_button_up(event)
                     if data['button_name'] == "A":
-                        commands['arduino'] = 1
+                        mode = 'MANUAL'
                     elif data['button_name'] == "B":
-                        commands['arduino'] = 4
+                        mode = 'ACRO'
                     elif data['button_name'] == "X":
-                        commands['arduino'] = 3
-                    elif data['button_name'] == "Y":
-                        commands['arduino'] = 2
+                        mode = 'STABILIZE'
                     elif data['button_name'] == "LB" or data['button_name'] == "RB":
                         trigger = True
 
