@@ -23,12 +23,13 @@ mode = 'MANUAL'
 safeZone = 0.012
 power_limit_ref = 1
 
-
 # Constants for servo control
 SERVO_MIN = 0
 SERVO_MAX = 180
 SERVO_MID = (SERVO_MAX + SERVO_MIN) // 2  # Correct midpoint calculation
 servo_position = SERVO_MID  # Start at the midpoint
+
+dpad_active = False
 
 def calculate_potency(joystick, trigger):
     temp_power_limit = power_limit_ref if trigger else 1.0
@@ -37,7 +38,6 @@ def calculate_potency(joystick, trigger):
 def calculate_throttle_potency(joystick, trigger):
     temp_power_limit = power_limit_ref if trigger else 1.0
     return int((-joystick * THROTTLE_RANGE) * temp_power_limit + NEUTRAL_THROTTLE)
-
 
 # Function to handle joystick axis motion
 def handle_axis_motion(event, joystick):
@@ -71,7 +71,6 @@ def post(commands):
         print("Failed to send data to API:", e)
     print(commands)
 
-
 def post_servo(position):
     url = 'http://192.168.5.1:8080/actuators'
     try:
@@ -84,8 +83,6 @@ def post_servo(position):
     except requests.exceptions.RequestException as e:
         print("Failed to send data to actuators:", e)
 
-
-# The remaining functions and main loop remain unchanged
 def handle_button_down(event):
     button_names = ["A", "B", "X", "Y", "LB", "RB"]
     button_name = button_names[event.button] if event.button < len(button_names) else str(event.button)
@@ -104,15 +101,14 @@ def handle_hat_motion(joystick):
     data = {'button_name': "DPad", 'value_x': value_x, 'value_y': value_y}
 
     # Define commands for left and right rolls
-    if value_x == -1:  # Left roll
+    if value_x == 1:  # Left roll
         post_servo('LEFTROLL')
-    elif value_x == 1:  # Right roll
+    elif value_x == -1:  # Right roll
         post_servo('RIGHTROLL')
     elif value_y == -1 and value_x == 0:
         post_servo('CLAW_OPEN')
     elif value_y == 1 and value_x == 0:
-        post_servo('CLAW_MIDOPEN')
-
+        post_servo('CLAW_CLOSE')
 
 def main():
     pygame.init()
@@ -125,6 +121,7 @@ def main():
 
     mode = 'MANUAL' # Inicializa el modo de vuelo en MANUAL
     trigger = False
+    global dpad_active
     try:
         while True:
             commands = { # Cada while se reinicia el diccionario de comandos
@@ -182,22 +179,12 @@ def main():
                 
                 elif event.type == JOYHATMOTION:
                     handle_hat_motion(joystick)  # Pass joystick, not event.value    
-
-                elif event.type == JOYBUTTONUP:
-                    data = handle_button_up(event)
-                    if data['button_name'] == "A":
-                        mode = 'ACRO'
-                    elif data['button_name'] == "B":
-                        mode = 'MANUAL'
-                    elif data['button_name'] == "Y":
-                        mode = 'STABILIZE'
-                    elif data['button_name'] == "LB" or data['button_name'] == "RB":
-                        trigger = True
-                                
-                elif event.type == JOYHATMOTION:
-                    handle_hat_motion(joystick)  # Pass joystick, not event.value
+                    dpad_active = True if joystick.get_hat(0) != (0, 0) else False
 
                 post(commands)
+            
+            if dpad_active:
+                handle_hat_motion(joystick)
 
     except KeyboardInterrupt:
         print("\nSaliendo del programa.")
