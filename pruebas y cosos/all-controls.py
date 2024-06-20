@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pygame
 from pygame.locals import *
-import requests  # Import the requests library
+import requests
 import time
 
 RANGE = 1000
@@ -12,7 +12,7 @@ NEUTRAL_THROTTLE = 500
 counter = 0
 
 arduino = 0
-throttle = 500,
+throttle = 500
 roll = 0
 pitch = 0
 yaw = 0
@@ -26,10 +26,14 @@ power_limit_ref = 1
 # Constants for servo control
 SERVO_MIN = 0
 SERVO_MAX = 180
-SERVO_MID = (SERVO_MAX + SERVO_MIN) // 2  # Correct midpoint calculation
-servo_position = SERVO_MID  # Start at the midpoint
+SERVO_MID = (SERVO_MAX + SERVO_MIN) // 2
+servo_position = SERVO_MID
 
 dpad_active = False
+
+# Rate limiting parameters
+MIN_COMMAND_INTERVAL = 0.1  # Minimum interval between command sends in seconds
+last_command_time = time.time()
 
 def calculate_potency(joystick, trigger):
     temp_power_limit = power_limit_ref if trigger else 1.0
@@ -64,17 +68,20 @@ def handle_axis_motion(event, joystick):
     return data
 
 def post(commands):
-    try:
-        response = requests.post('http://192.168.5.1:8080/postControlMovement', json=commands)
-        print("Data sent to API. Status code:", response.status_code)
-    except requests.exceptions.RequestException as e:
-        print("Failed to send data to API:", e)
-    print(commands)
+    global last_command_time
+    current_time = time.time()
+    if current_time - last_command_time >= MIN_COMMAND_INTERVAL:
+        try:
+            response = requests.post('http://192.168.5.1:8080/postControlMovement', json=commands)
+            print("Data sent to API. Status code:", response.status_code)
+            last_command_time = current_time
+        except requests.exceptions.RequestException as e:
+            print("Failed to send data to API:", e)
+        print(commands)
 
 def post_servo(position):
     url = 'http://192.168.5.1:8080/actuators'
     try:
-        # Ensure the position is sent as a string or as a dictionary directly
         data = {"actions": position} if isinstance(position, str) else {"actions": str(position)}
         response = requests.post(url, json=data)
         print("Data sent to actuators. Status code:", response.status_code)
@@ -100,7 +107,6 @@ def handle_hat_motion(joystick):
     value_x, value_y = joystick.get_hat(0)
     data = {'button_name': "DPad", 'value_x': value_x, 'value_y': value_y}
 
-    # Define commands for left and right rolls
     if value_x == 1:  # Left roll
         post_servo('LEFTROLL')
     elif value_x == -1:  # Right roll
@@ -119,12 +125,12 @@ def main():
     joystick = pygame.joystick.Joystick(0)
     joystick.init()
 
-    mode = 'MANUAL' # Inicializa el modo de vuelo en MANUAL
+    mode = 'MANUAL'
     trigger = False
     global dpad_active
     try:
         while True:
-            commands = { # Cada while se reinicia el diccionario de comandos
+            commands = {
                 'throttle': 500,
                 'roll': 0,
                 'pitch': 0,
@@ -133,7 +139,7 @@ def main():
                 'mode': mode,
                 'arduino': 0,
             }                   
-            for event in pygame.event.get(): # Cada que se detecta un evento en el control modificamos los comandos
+            for event in pygame.event.get():
                 if event.type == JOYAXISMOTION:
                     data = handle_axis_motion(event, joystick)
                     lx = 0
@@ -152,7 +158,7 @@ def main():
                     commands['roll'] = calculate_potency(lx, trigger) if abs(lx) > safeZone else NEUTRAL
                     commands['yaw'] = calculate_potency(rx, trigger) if abs(rx) > safeZone else NEUTRAL
                     if abs(ry) > safeZone:
-                        commands['throttle'] = calculate_throttle_potency(ry, trigger)    
+                        commands['throttle'] = calculate_throttle_potency(ry, trigger)
 
                 elif event.type == JOYBUTTONUP:
                     data = handle_button_up(event)
@@ -178,7 +184,7 @@ def main():
                         print(f"Button {event.button} pressed")
                 
                 elif event.type == JOYHATMOTION:
-                    handle_hat_motion(joystick)  # Pass joystick, not event.value    
+                    handle_hat_motion(joystick)
                     dpad_active = True if joystick.get_hat(0) != (0, 0) else False
 
                 post(commands)
@@ -192,7 +198,7 @@ def main():
 
 if __name__ == "__main__":
     if counter == 0:
-        commands = { # Cada while se reinicia el diccionario de comandos
+        commands = {
             'throttle': 500,
             'roll': 0,
             'pitch': 0,
